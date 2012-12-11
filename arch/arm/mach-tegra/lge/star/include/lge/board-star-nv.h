@@ -14,7 +14,11 @@
 #define __MACH_TEGRA_X2_NV_H
 
 //#define LGE_NVDATA_PARTITION			"/dev/block/platform/sdhci-tegra.3/by-num/p3"
+#ifdef CONFIG_CM_BOOTLOADER_COMPAT
+#define LGE_NVDATA_PARTITION			"/dev/block/mmcblk0p3"
+#else
 #define LGE_NVDATA_PARTITION			"/dev/block/mmcblk0p5"
+#endif
 
 
 // modify this file and /android/vendor/lge/tegra/core/system/fastboot/lge_boot/inc/lge_boot_utils.h
