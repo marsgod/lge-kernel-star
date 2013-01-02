@@ -182,10 +182,14 @@ const struct tegra_init_gpio_info tegra_sleep_gpio_info_array[] = {
     { 'u'-'a',      1, GPIO_ENABLE, GPIO_OUTPUT,    GPIO_SLEEP_LOW,   GPU},   // AP20_UART_SW
     { 'u'-'a',      2, GPIO_ENABLE, GPIO_OUTPUT,    GPIO_SLEEP_LOW,  GPU},   // MDM_UART_SW
     { 'u'-'a',      4, GPIO_ENABLE, GPIO_OUTPUT,    GPIO_SLEEP_LOW,   GPU},   // VIBE_EN
-    //{ 'j'-'a',      6, GPIO_ENABLE, GPIO_OUTPUT,    GPIO_SLEEP_LOW,   IRRX},  // IPC_MRDY1 (P999bn)
+
+#if defined(CONFIG_MACH_STAR_P999)    
+    { 'j'-'a',      6, GPIO_ENABLE, GPIO_OUTPUT,    GPIO_SLEEP_LOW,   IRRX},  // IPC_MRDY1 (P999bn)
+#endif    
+
 #if defined(CONFIG_MACH_STAR_P990)
     { 'r'-'a',      7, GPIO_ENABLE, GPIO_OUTPUT,    GPIO_SLEEP_HIGH,   KBCB}, // IFX_VBUS_EN
-#elif defined(CONFIG_MACH_STAR_SU660)
+#elif defined(CONFIG_MACH_STAR_SU660) || defined(CONFIG_MACH_STAR_P999)
     { 'r'-'a',      7, GPIO_ENABLE, GPIO_OUTPUT,    GPIO_SLEEP_LOW,   KBCB},  // DMB_EN
 #else
 	#error
@@ -216,11 +220,7 @@ const struct tegra_init_gpio_info tegra_sleep_gpio_info_array[] = {
     { 'v'-'a',      2, GPIO_ENABLE, GPIO_INPUT,     GPIO_SLEEP_LOW,   UAC},   // AP_PWR_ON(powerkey)    
     //{ 'w'-'a',      2, GPIO_ENABLE, GPIO_INPUT,     GPIO_SLEEP_LOW,   SPIG},  // AUDIO_INT_N
     { 'w'-'a',      3, GPIO_ENABLE, GPIO_INPUT,     GPIO_SLEEP_LOW,   SPIH},  // BATT_LOW_INT
-#if (defined(CONFIG_MACH_STAR_P990) || defined(CONFIG_MACH_STAR_P999))
-    { 'd'-'a',      3, GPIO_ENABLE, GPIO_INPUT,     GPIO_SLEEP_LOW,   SLXC},  //  HOOK_DET
-#else
     { 'n'-'a',      5, GPIO_ENABLE, GPIO_INPUT,     GPIO_SLEEP_LOW,   LSDA},  //  HOOK_DET
-#endif
     //{ 'i'-'a',      5, GPIO_ENABLE, GPIO_INPUT,     GPIO_SLEEP_LOW,   ATB},   // MICROSD_DET_N
 
     /* input pins */
@@ -236,6 +236,8 @@ const struct tegra_init_gpio_info tegra_sleep_gpio_info_array[] = {
 	{ 'r'-'a',		5,	GPIO_ENABLE,	GPIO_OUTPUT,	GPIO_SLEEP_LOW,		KBCD},  // NC
 #elif defined(CONFIG_MACH_STAR_SU660)
 	{ 'r'-'a',		5,	GPIO_ENABLE,	GPIO_OUTPUT,	GPIO_SLEEP_HIGH,	KBCD},  // IFX_VBUS_EN
+#elif defined(CONFIG_MACH_STAR_P999)
+	{ 'r'-'a',		5,	GPIO_ENABLE,	GPIO_INPUT,	GPIO_SLEEP_LOW,		KBCD},
 #else
 	#error
 	//{ 'r'-'a',	5,	GPIO_ENABLE,	GPIO_INPUT,		GPIO_SLEEP_LOW,		KBCD},  // BATT_ID(P999BN)??
@@ -267,9 +269,7 @@ const struct tegra_init_gpio_info tegra_sleep_gpio_info_array[] = {
 
 	{ 'w'-'a',		4,	GPIO_ENABLE,	GPIO_INPUT,	GPIO_SLEEP_LOW,	CDEV1},	// AUDIO_MCLK
 	{ 'w'-'a',		5,	GPIO_ENABLE,	GPIO_INPUT,	GPIO_SLEEP_LOW,	CDEV2},	// AUDIO_MCLK2
-#if defined(CONFIG_MACH_STAR_SU660)
 { 'v'-'a',      6, GPIO_ENABLE, GPIO_INPUT,     GPIO_SLEEP_LOW,   GPV},  // HomeKey (SU660)
-#endif
 	{ 'n'-'a',		0,	GPIO_ENABLE, GPIO_INPUT,	GPIO_SLEEP_LOW,	 		DAP1}, 	// DAP1
 	{ 'n'-'a',		1,	GPIO_ENABLE, GPIO_INPUT,	GPIO_SLEEP_LOW,	 		DAP1}, 	// DAP1
 	{ 'n'-'a',		2,	GPIO_ENABLE, GPIO_INPUT,	GPIO_SLEEP_LOW,	 		DAP1}, 	// DAP1

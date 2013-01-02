@@ -57,6 +57,7 @@ static struct snd_soc_codec *wm8994_codec;
 
 #if defined(CONFIG_MACH_STAR) || defined(CONFIG_MACH_BSSQ)
 extern bool in_call_state();
+extern bool is_fmradio_state();
 #endif // MOBII LP1 sleep
 
 struct fll_config {
@@ -1196,7 +1197,8 @@ static int aif1clk_ev(struct snd_soc_dapm_widget *w,
 		wm8994->aif1clk_enable = 1;
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		wm8994->aif1clk_disable = 1;
+		wm8994->aif1clk_enable = 1;    /* iknoh 121025 for AIF1 clock switch test */
+		//wm8994->aif1clk_disable = 1;  
 		break;
 	}
 
@@ -2685,7 +2687,6 @@ static int wm8994_hw_params(struct snd_pcm_substream *substream,
 	snd_soc_update_bits(codec, rate_reg, WM8994_AIF1_SR_MASK |
 			    WM8994_AIF1CLK_RATE_MASK, rate_val);
 
-#define LGE_CHANGE_I2S_FOR_VOICE_CALL
 #if defined (CONFIG_SU880) || defined (CONFIG_KU8800) || defined (CONFIG_MACH_STAR)  || defined (CONFIG_MACH_BSSQ)// 110816 taehyun.lim bt vt ap slave //[heejeong.seo@lge.com] 2011-12-07 [LGE_AP20]
 // 110903 taehyun.lim voice call nxp i2s_master_slave_change [S] 
 #ifndef LGE_CHANGE_I2S_FOR_VOICE_CALL
@@ -2916,7 +2917,11 @@ static int wm8994_suspend(struct snd_soc_codec *codec, pm_message_t state)
 	int i, ret;
 
 #if defined(CONFIG_MACH_STAR) || defined(CONFIG_MACH_BSSQ)
-	if(in_call_state())
+	if(in_call_state()
+//                                                                                                            
+	|| is_fmradio_state()
+//                                                                                                            
+	)
 	    return 0;
 #endif /* MOBII LP1 sleep */
 
@@ -2948,7 +2953,11 @@ static int wm8994_resume(struct snd_soc_codec *codec)
 	unsigned int val, mask;
 
 #if defined(CONFIG_MACH_STAR) || defined(CONFIG_MACH_BSSQ)
-	if(in_call_state())
+	if(in_call_state()
+//                                                                                                            
+	|| is_fmradio_state()
+//                                                                                                            
+	)
 	    return 0;
 #endif /* MOBII LP1 sleep */
 

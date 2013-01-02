@@ -75,12 +75,16 @@ extern unsigned long clk_get_rate(struct clk *c);
 
 struct headset_switch_data	*headset_sw_data;	//LGE_CHANGE_S [chahee.kim@lge.com] 2011-11-14 
 
-extern struct wake_lock headset_wake_lock;  //20111017 heejeong.seo@lge.com Problem that no wake up when disconn headset in calling
+extern struct wake_lock headset_wake_lock;  //                                                                                     
 
 #if defined(CONFIG_MACH_STAR) || defined(CONFIG_MACH_BSSQ)
 static bool is_call_mode; 
 bool in_call_state();
 #endif // MOBII LP1 sleep
+
+//                                                                                                            
+static int is_fmradio_mode;
+//                                                                                                            
 
 struct tegra_wm8994 {
 	struct tegra_asoc_utils_data util_data;
@@ -234,7 +238,7 @@ static int tegra_voice_call_hw_params(struct snd_pcm_substream *substream,
 	struct tegra_wm8994 *machine = snd_soc_card_get_drvdata(card);
 	int srate, mclk, i2s_daifmt;
 	int err;
-    //unsigned long cdev_srate;  //heejeong.seo@lge.com 20111128 ICS ap20 wm8994
+    unsigned long cdev_srate;  //heejeong.seo@lge.com 20111128 ICS ap20 wm8994
 	
 
 	srate = params_rate(params);
@@ -258,7 +262,6 @@ static int tegra_voice_call_hw_params(struct snd_pcm_substream *substream,
 		mclk = 12000000;
 		break;
 	}
-	printk(KERN_ERR "tegra_soc_wm8994.c tegra_voice_call_hw_params mclk=%d from %d\n",mclk, srate); 
 
 	err = tegra_asoc_utils_set_rate(&machine->util_data, srate, mclk);
 	if (err < 0) {
@@ -311,10 +314,8 @@ static int tegra_voice_call_hw_params(struct snd_pcm_substream *substream,
 		return err;
 	}
 */
-#if 0
 	cdev_srate = clk_get_rate(machine->util_data.clk_cdev1);
 	printk(KERN_ERR "tegra_soc_wm8994.c tegra_voice_call_hw_params sys_clk=%d\n",cdev_srate); 
-#endif
 #if 0
 	err = snd_soc_dai_set_pll(codec_dai, WM8994_FLL1, WM8994_FLL_SRC_MCLK1, cdev_srate, 11289600/* I2S1_CLK*/);
 	if (err < 0) {
@@ -332,11 +333,11 @@ static int tegra_voice_call_hw_params(struct snd_pcm_substream *substream,
 		return err;
 	}
 
-#if 0
+#if 1
 	err = snd_soc_dai_set_sysclk(codec_dai, WM8994_SYSCLK_MCLK1, /*I2S1_CLK*/cdev_srate, SND_SOC_CLOCK_IN);
 #else
-	err = snd_soc_dai_set_pll(codec_dai, WM8994_FLL2, WM8994_FLL_SRC_MCLK1 ,mclk, mclk); 
-	err = snd_soc_dai_set_sysclk(codec_dai, WM8994_SYSCLK_FLL2, mclk, SND_SOC_CLOCK_IN);
+	err = snd_soc_dai_set_pll(codec_dai, WM8994_FLL2, WM8994_FLL_SRC_MCLK1 ,cdev_srate, cdev_srate); 
+	err = snd_soc_dai_set_sysclk(codec_dai, WM8994_SYSCLK_FLL2, cdev_srate, SND_SOC_CLOCK_IN);
 
 	if (err < 0) {
 		pr_err("codec_dai sysclk not set\n");
@@ -670,8 +671,62 @@ struct snd_kcontrol_new tegra_call_mode_control = {
 };
 
 //LGE_CHANGE_E [chahee.kim@lge.com] 2012-02-16 
+static int tegra_fmradio_mode_info(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
+		uinfo->count = 1;
+		uinfo->value.integer.min = 0;
+		uinfo->value.integer.max = 1;
+		return 0;
+}
 
-//LGE_CHANGE_S [chahee.kim@lge.com] 2012-01-21 
+static int tegra_fmradio_mode_get(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_value *ucontrol)
+{
+	struct tegra_wm8994 *machine = snd_kcontrol_chip(kcontrol);
+		
+		printk(KERN_ERR "tegra_fmradio_mode_get() is_fmradio_mode=%d\n", is_fmradio_mode); 
+		ucontrol->value.integer.value[0] = is_fmradio_mode;
+		
+		return 0;
+}
+
+static int tegra_fmradio_mode_put(struct snd_kcontrol *kcontrol,
+		struct snd_ctl_elem_value *ucontrol)
+{
+	struct tegra_wm8994 *machine = snd_kcontrol_chip(kcontrol);
+		int is_fmradio_mode_new = ucontrol->value.integer.value[0];
+		
+		printk(KERN_ERR "tegra_fmradio_mode_put() is_fmradio_mode=%d\n", is_fmradio_mode); 
+		printk(KERN_ERR "tegra_fmradio_mode_put() is_fmradio_mode_new=%d\n", is_fmradio_mode_new); 
+		if (is_fmradio_mode == is_fmradio_mode_new)
+			return 0;
+				
+				is_fmradio_mode = is_fmradio_mode_new;
+				printk(KERN_ERR "tegra_fmradio_mode_put() is_fmradio_mode=%d\n", is_fmradio_mode); 
+				
+				return 1;
+}
+
+struct snd_kcontrol_new tegra_fmradio_mode_control = {
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.name = "FMRadio Mode Switch",
+		.private_value = 0xffff,
+		.info = tegra_fmradio_mode_info,
+		.get = tegra_fmradio_mode_get,
+		.put = tegra_fmradio_mode_put
+};
+
+bool is_fmradio_state(void)
+{
+	if (!is_fmradio_mode)
+		return false;
+	else
+		return true;
+}
+//                                             
 #if 0
 //LGE_CHANGE_S [heejeong.seo@lge.com] 2011-12-20 [LGE_AP20] set dynamic pull up
 int tegra_codec_startup(struct snd_pcm_substream *substream)
@@ -876,7 +931,7 @@ static const struct snd_kcontrol_new tegra_wm8994_controls[] = {
 static ssize_t switch_gpio_print_state(struct switch_dev *sdev, char *buf)
 {
 
-	//printk(KERN_ERR "##(Headset_det.c)## switch_gpio_print_state() => sdev->state(%d), headset_sw_data->state_on(%s)/state_off(%s)\n",sdev->state,headset_sw_data->state_on,headset_sw_data->state_off);
+	printk(KERN_ERR "##(Headset_det.c)## switch_gpio_print_state() => sdev->state(%d), headset_sw_data->state_on(%s)/state_off(%s)\n",sdev->state,headset_sw_data->state_on,headset_sw_data->state_off);
 
 	const char *state;
 	if (switch_get_state(sdev))
@@ -1015,6 +1070,10 @@ static int tegra_wm8994_init(struct snd_soc_pcm_runtime *rtd)
 		return ret;
 //LGE_CHANGE_E [chahee.kim@lge.com] 2012-02-16 
 
+  ret = snd_ctl_add(codec->card->snd_card, snd_ctl_new1(&tegra_fmradio_mode_control, machine));
+  if (ret < 0)
+    return ret;
+//                 
 // LGE_CHANGE_S [heejeong.seo@lge.com] 2011-12-20 [LGE_AP20]
 #if defined (CONFIG_MACH_STAR) || defined (CONFIG_MACH_BSSQ)
     if (gpio_is_valid(pdata->gpio_hp_det)) 
